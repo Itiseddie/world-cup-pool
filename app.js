@@ -14,6 +14,57 @@
     teamQuery: ""
   };
 
+  const FLAG_CODES = {
+    algeria: "dz",
+    argentina: "ar",
+    australia: "au",
+    austria: "at",
+    belgium: "be",
+    "bosnia and herzegovina": "ba",
+    brazil: "br",
+    canada: "ca",
+    "cape verde": "cv",
+    colombia: "co",
+    croatia: "hr",
+    curacao: "cw",
+    czechia: "cz",
+    "dr congo": "cd",
+    ecuador: "ec",
+    egypt: "eg",
+    england: "gb-eng",
+    france: "fr",
+    germany: "de",
+    ghana: "gh",
+    haiti: "ht",
+    iran: "ir",
+    iraq: "iq",
+    "ivory coast": "ci",
+    japan: "jp",
+    jordan: "jo",
+    mexico: "mx",
+    morocco: "ma",
+    netherlands: "nl",
+    "new zealand": "nz",
+    norway: "no",
+    panama: "pa",
+    paraguay: "py",
+    portugal: "pt",
+    qatar: "qa",
+    "saudi arabia": "sa",
+    scotland: "gb-sct",
+    senegal: "sn",
+    "south africa": "za",
+    "south korea": "kr",
+    spain: "es",
+    sweden: "se",
+    switzerland: "ch",
+    tunisia: "tn",
+    turkiye: "tr",
+    "united states": "us",
+    uruguay: "uy",
+    uzbekistan: "uz"
+  };
+
   const el = {
     loadStatus: document.querySelector("#loadStatus"),
     refreshButton: document.querySelector("#refreshButton"),
@@ -162,7 +213,7 @@
 
   function teamPill(name, tier, team) {
     const group = team.Group ? `Group ${team.Group}` : "Group TBD";
-    return `<span class="pill"><b>${tier}</b>${escapeHtml(name)} - ${escapeHtml(group)}</span>`;
+    return `<span class="pill"><b>${tier}</b>${flagHtml(name)}${escapeHtml(name)} - ${escapeHtml(group)}</span>`;
   }
 
   function renderTeams() {
@@ -181,7 +232,7 @@
       <article class="team-card">
         <header>
           <div>
-            <strong>${escapeHtml(team["Team Name"])}</strong>
+            <strong>${flagHtml(team["Team Name"])}${escapeHtml(team["Team Name"])}</strong>
             <span>Group ${escapeHtml(team.Group)} - ${escapeHtml(team["Assigned Participant"])}</span>
           </div>
           <span class="badge ${team["Super Tier"] === "A" ? "tier-a" : "tier-b"}">Tier ${escapeHtml(team["Super Tier"])}</span>
@@ -202,7 +253,7 @@
         <div class="rank">${person.rank || index + 1}</div>
         <div>
           <strong>${escapeHtml(person["Participant Name"])}</strong>
-          <div class="updated">${escapeHtml(person["Tier A Team"])} / ${escapeHtml(person["Tier B Team"])}</div>
+          <div class="updated">${flagHtml(person["Tier A Team"])}${escapeHtml(person["Tier A Team"])} / ${flagHtml(person["Tier B Team"])}${escapeHtml(person["Tier B Team"])}</div>
         </div>
         <strong>${person.points} pts</strong>
       </div>
@@ -217,6 +268,19 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function flagHtml(teamName) {
+    const code = FLAG_CODES[teamKey(teamName)];
+    const label = escapeHtml(teamName);
+    return code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="" aria-hidden="true" loading="lazy"><span class="sr-only">${label} flag</span>` : "";
+  }
+
+  function teamKey(teamName) {
+    return String(teamName || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase();
   }
 
   async function refreshData() {
