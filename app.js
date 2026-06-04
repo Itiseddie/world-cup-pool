@@ -207,10 +207,27 @@
       })
       .sort((a, b) => b.points - a.points || a["Participant Name"].localeCompare(b["Participant Name"]));
 
-    state.assignments = state.assignments.map((person, index) => ({
-      ...person,
-      displayRank: index + 1
-    }));
+    const rankCounts = state.assignments.reduce((counts, person) => {
+      const key = String(person.points);
+      counts.set(key, (counts.get(key) || 0) + 1);
+      return counts;
+    }, new Map());
+
+    let currentRank = 0;
+    let previousPoints = null;
+    state.assignments = state.assignments.map((person, index) => {
+      if (person.points !== previousPoints) {
+        currentRank = index + 1;
+        previousPoints = person.points;
+      }
+      const tied = (rankCounts.get(String(person.points)) || 0) > 1;
+      return {
+        ...person,
+        displayRank: currentRank,
+        isTied: tied,
+        rankLabel: `${tied ? "T-" : ""}${currentRank}`
+      };
+    });
   }
 
   function rankingTeamName(row) {
@@ -257,9 +274,15 @@
 
   function renderSummary() {
     const leader = state.assignments[0];
+    const tiedLeaders = leader ? state.assignments.filter((person) => person.points === leader.points) : [];
     el.participantCount.textContent = state.assignments.length;
     el.teamCount.textContent = state.teams.length;
-    el.leaderName.textContent = leader ? leader["Participant Name"] : "--";
+    el.leaderName.textContent = leader ? leaderSummary(tiedLeaders) : "--";
+  }
+
+  function leaderSummary(tiedLeaders) {
+    if (tiedLeaders.length <= 1) return tiedLeaders[0]["Participant Name"];
+    return `${tiedLeaders.length} tied`;
   }
 
   function renderParticipantSelect() {
@@ -288,7 +311,7 @@
         <p class="eyebrow">My Pool</p>
         <h2>${escapeHtml(selected["Participant Name"])}</h2>
         <div class="my-pool-stats">
-          <span>Rank <strong>#${selected.displayRank}</strong></span>
+          <span>Rank <strong>${rankLabel(selected)}</strong></span>
           <span>Points <strong>${selected.points}</strong></span>
         </div>
       </div>
@@ -324,7 +347,7 @@
 
     el.leaderboard.innerHTML = filtered.map((person, index) => `
       <article class="standing-row ${person["Participant Name"] === state.selectedParticipant ? "is-selected" : ""}">
-        <div class="rank">${person.displayRank || person.rank || index + 1}</div>
+        <div class="rank ${person.isTied ? "is-tied" : ""}" title="${person.isTied ? "Tied rank" : "Rank"}">${rankLabel(person, index)}</div>
         <div class="person">
           <strong>${escapeHtml(person["Participant Name"])}</strong>
           <span>${escapeHtml(statusText(person))}</span>
@@ -385,7 +408,7 @@
     const topFive = state.assignments.slice(0, 5);
     el.widgetList.innerHTML = topFive.map((person, index) => `
       <div class="widget-row">
-        <div class="rank">${person.displayRank || person.rank || index + 1}</div>
+        <div class="rank ${person.isTied ? "is-tied" : ""}" title="${person.isTied ? "Tied rank" : "Rank"}">${rankLabel(person, index)}</div>
         <div>
           <strong>${escapeHtml(person["Participant Name"])}</strong>
           <div class="updated">${flagHtml(person["Tier A Team"])}${teamLabel(person["Tier A Team"], person.tierA)} / ${flagHtml(person["Tier B Team"])}${teamLabel(person["Tier B Team"], person.tierB)}</div>
@@ -403,6 +426,10 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  function rankLabel(person, fallbackIndex = 0) {
+    return person.rankLabel || String(person.displayRank || person.rank || fallbackIndex + 1);
   }
 
   function flagHtml(teamName) {
