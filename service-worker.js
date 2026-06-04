@@ -1,10 +1,10 @@
-const CACHE_NAME = "world-cup-pool-v2-rankings";
+const CACHE_NAME = "world-cup-pool-v3-ties";
 const ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./styles.css?v=rankings",
-  "./app.js?v=rankings",
+  "./styles.css?v=ties",
+  "./app.js?v=ties",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
