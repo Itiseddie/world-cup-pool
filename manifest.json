@@ -1,0 +1,25 @@
+{
+  "name": "World Cup Pool",
+  "short_name": "World Cup Pool",
+  "description": "A fantasy-sports style standings app for the World Cup office pool.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8fbfa",
+  "theme_color": "#103f3a",
+  "icons": [
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

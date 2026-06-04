@@ -4,9 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#103f3a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="World Cup Pool">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>World Cup Office Pool</title>
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="stylesheet" href="styles.css?v=flags2">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="stylesheet" href="styles.css?v=rankings">
   </head>
   <body>
     <main class="shell">
@@ -15,11 +20,25 @@
           <p class="eyebrow">FIFA World Cup 2026 Office Pool</p>
           <h1>Standings Dashboard</h1>
         </div>
-        <div class="status">
-          <span id="loadStatus">Loading sheet data</span>
-          <button id="refreshButton" type="button" aria-label="Refresh data" title="Refresh data">Refresh</button>
+        <div class="header-controls">
+          <div class="last-updated">
+            <span>Last Updated</span>
+            <strong id="lastUpdated">Loading...</strong>
+          </div>
+          <label class="participant-picker">
+            <span>View</span>
+            <select id="participantSelect">
+              <option value="">Everyone</option>
+            </select>
+          </label>
+          <div class="status">
+            <span id="loadStatus">Loading sheet data</span>
+            <button id="refreshButton" type="button" aria-label="Refresh data" title="Refresh data">Refresh</button>
+          </div>
         </div>
       </header>
+
+      <section id="myPoolView" class="my-pool" hidden aria-live="polite"></section>
 
       <section class="summary-grid" aria-label="Pool summary">
         <article class="metric">
@@ -49,7 +68,10 @@
 
       <section id="leaderboardView" class="view is-active">
         <div class="panel-head">
-          <h2>Pool Standings</h2>
+          <div>
+            <h2>Pool Standings</h2>
+            <p class="rank-note">Team numbers in parentheses are FIFA men&apos;s rankings from Apr 2026.</p>
+          </div>
           <label class="search">
             <span>Search participant</span>
             <input id="participantSearch" type="search" placeholder="Type a name">
@@ -60,7 +82,10 @@
 
       <section id="teamsView" class="view">
         <div class="panel-head">
-          <h2>Team Tracker</h2>
+          <div>
+            <h2>Team Tracker</h2>
+            <p class="rank-note">Team numbers in parentheses are FIFA men&apos;s rankings from Apr 2026.</p>
+          </div>
           <label class="search">
             <span>Filter teams</span>
             <input id="teamSearch" type="search" placeholder="Team, group, or participant">
@@ -110,6 +135,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=flags2"></script>
+    <script src="app.js?v=rankings"></script>
   </body>
 </html>

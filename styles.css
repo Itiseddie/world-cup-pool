@@ -80,6 +80,13 @@ h2 {
   letter-spacing: 0;
 }
 
+.rank-note {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .status {
   display: flex;
   align-items: center;
@@ -87,6 +94,62 @@ h2 {
   color: var(--muted);
   font-size: 0.92rem;
   white-space: nowrap;
+}
+
+.header-controls {
+  display: grid;
+  grid-template-columns: minmax(160px, auto) minmax(160px, auto);
+  align-items: end;
+  gap: 10px;
+}
+
+.last-updated,
+.participant-picker {
+  display: grid;
+  gap: 5px;
+}
+
+.last-updated {
+  background: rgba(16, 63, 58, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  color: #ffffff;
+  min-height: 58px;
+  padding: 10px 12px;
+}
+
+.last-updated span,
+.participant-picker span {
+  color: inherit;
+  font-size: 0.73rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.last-updated strong {
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.participant-picker {
+  color: var(--muted);
+}
+
+.participant-picker select {
+  min-height: 40px;
+  min-width: 160px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  padding: 8px 10px;
+}
+
+.header-controls .status {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .status button,
@@ -107,6 +170,96 @@ h2 {
 .tab:hover,
 .widget-head a:hover {
   border-color: var(--green-2);
+}
+
+.my-pool {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.8fr) minmax(0, 1.4fr);
+  gap: 14px;
+  margin: 10px 0 16px;
+  background: linear-gradient(135deg, rgba(16, 63, 58, 0.98), rgba(31, 111, 100, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: #ffffff;
+  overflow: hidden;
+  padding: 16px;
+}
+
+.my-pool[hidden] {
+  display: none;
+}
+
+.my-pool .eyebrow {
+  color: var(--gold);
+}
+
+.my-pool h2 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  line-height: 1;
+}
+
+.my-pool-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.my-pool-stats span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  min-height: 36px;
+  padding: 7px 11px;
+}
+
+.my-pool-stats strong {
+  color: #ffffff;
+  font-size: 1.25rem;
+}
+
+.my-teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.my-team {
+  background: rgba(255, 255, 255, 0.11);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  min-height: 128px;
+  padding: 13px;
+}
+
+.my-team strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 1.25rem;
+}
+
+.my-team span,
+.my-team small {
+  display: block;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.tier-dot {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink) !important;
+  font-size: 0.74rem;
+  font-weight: 900;
+  padding: 5px 8px;
+  text-transform: uppercase;
 }
 
 .summary-grid {
@@ -202,6 +355,11 @@ h2 {
   padding: 12px;
 }
 
+.standing-row.is-selected {
+  border-color: var(--gold);
+  box-shadow: inset 4px 0 0 var(--gold), 0 10px 28px rgba(215, 166, 74, 0.15);
+}
+
 .rank {
   display: grid;
   place-items: center;
@@ -271,6 +429,18 @@ h2 {
   margin-right: 6px;
   object-fit: cover;
   vertical-align: -0.12em;
+}
+
+.fifa-rank {
+  color: var(--gold);
+  font-size: 0.8em;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.pill .fifa-rank,
+.updated .fifa-rank {
+  color: var(--green-2);
 }
 
 .pill .flag {
@@ -441,11 +611,52 @@ h2 {
   padding-bottom: 0;
 }
 
+.offline-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.offline-card {
+  width: min(540px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.offline-card h1 {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+}
+
+.offline-card p:not(.eyebrow) {
+  color: var(--muted);
+}
+
+.offline-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  border-radius: 8px;
+  background: var(--green);
+  color: #ffffff;
+  font-weight: 850;
+  margin-top: 12px;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
 @media (max-width: 860px) {
   .topbar,
   .panel-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .header-controls,
+  .my-pool {
+    grid-template-columns: 1fr;
   }
 
   .status {
@@ -478,7 +689,8 @@ h2 {
 
   .summary-grid,
   .teams-grid,
-  .rules-grid {
+  .rules-grid,
+  .my-teams {
     grid-template-columns: 1fr;
   }
 
