@@ -347,8 +347,7 @@
   }
 
   function teamPill(name, tier, team) {
-    const group = team.Group ? `Group ${team.Group}` : "Group TBD";
-    return `<span class="pill"><b>${tier}</b>${flagHtml(name)}${teamLabel(name, team)} - ${escapeHtml(group)}</span>`;
+    return `<span class="pill"><b>${tier}</b>${flagHtml(name)}${teamLabel(name, team)}</span>`;
   }
 
   function renderTeams() {
