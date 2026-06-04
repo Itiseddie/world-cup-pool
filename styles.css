@@ -215,8 +215,14 @@ h2 {
 
 .person strong,
 .team-card strong {
+  align-items: center;
   display: block;
   font-size: 1.03rem;
+}
+
+.team-card strong {
+  display: flex;
+  gap: 8px;
 }
 
 .person span,
@@ -253,6 +259,31 @@ h2 {
   padding: 6px 10px;
   font-size: 0.88rem;
   font-weight: 750;
+}
+
+.flag {
+  display: inline-block;
+  width: 22px;
+  height: 15px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(20, 33, 31, 0.14);
+  flex: 0 0 auto;
+  margin-right: 6px;
+  object-fit: cover;
+  vertical-align: -0.12em;
+}
+
+.pill .flag {
+  margin-right: 0;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .pill b {
