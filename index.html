@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#103f3a">
+    <title>World Cup Office Pool</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">FIFA World Cup 2026 Office Pool</p>
+          <h1>Standings Dashboard</h1>
+        </div>
+        <div class="status">
+          <span id="loadStatus">Loading sheet data</span>
+          <button id="refreshButton" type="button" aria-label="Refresh data" title="Refresh data">Refresh</button>
+        </div>
+      </header>
+
+      <section class="summary-grid" aria-label="Pool summary">
+        <article class="metric">
+          <span>Participants</span>
+          <strong id="participantCount">--</strong>
+        </article>
+        <article class="metric">
+          <span>Teams Assigned</span>
+          <strong id="teamCount">--</strong>
+        </article>
+        <article class="metric">
+          <span>Leader</span>
+          <strong id="leaderName">--</strong>
+        </article>
+        <article class="metric">
+          <span>Total Pot</span>
+          <strong id="potAmount">$600</strong>
+        </article>
+      </section>
+
+      <nav class="tabs" aria-label="Dashboard views">
+        <button class="tab is-active" type="button" data-view="leaderboard">Leaderboard</button>
+        <button class="tab" type="button" data-view="teams">Teams</button>
+        <button class="tab" type="button" data-view="rules">Rules</button>
+        <a class="tab link-tab" href="?view=widget">Widget</a>
+      </nav>
+
+      <section id="leaderboardView" class="view is-active">
+        <div class="panel-head">
+          <h2>Pool Standings</h2>
+          <label class="search">
+            <span>Search participant</span>
+            <input id="participantSearch" type="search" placeholder="Type a name">
+          </label>
+        </div>
+        <div id="leaderboard" class="leaderboard" aria-live="polite"></div>
+      </section>
+
+      <section id="teamsView" class="view">
+        <div class="panel-head">
+          <h2>Team Tracker</h2>
+          <label class="search">
+            <span>Filter teams</span>
+            <input id="teamSearch" type="search" placeholder="Team, group, or participant">
+          </label>
+        </div>
+        <div id="teamsGrid" class="teams-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="rulesView" class="view">
+        <div class="rules-grid">
+          <article>
+            <h2>Scoring</h2>
+            <dl class="score-list">
+              <div><dt>Group Stage Win</dt><dd>1</dd></div>
+              <div><dt>Group Stage Draw</dt><dd>0.5</dd></div>
+              <div><dt>Advance to Round of 32</dt><dd>2</dd></div>
+              <div><dt>Advance to Round of 16</dt><dd>3</dd></div>
+              <div><dt>Advance to Quarterfinal</dt><dd>5</dd></div>
+              <div><dt>Advance to Semifinal</dt><dd>8</dd></div>
+              <div><dt>Advance to Final</dt><dd>12</dd></div>
+              <div><dt>Champion</dt><dd>18</dd></div>
+            </dl>
+          </article>
+          <article>
+            <h2>Tiebreakers</h2>
+            <ol class="rule-list">
+              <li>Most total group stage wins</li>
+              <li>Most teams advancing to quarterfinals or beyond</li>
+              <li>Most teams advancing to semifinals or beyond</li>
+              <li>Most teams advancing to the final</li>
+              <li>Witnessed commissioner random draw if still tied</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+
+      <section id="widgetView" class="widget-view" aria-label="Compact standings widget">
+        <div class="widget-head">
+          <div>
+            <p class="eyebrow">Office Pool</p>
+            <h2>Top Standings</h2>
+          </div>
+          <a href="index.html">Full dashboard</a>
+        </div>
+        <div id="widgetList" class="widget-list"></div>
+        <p id="widgetUpdated" class="updated"></p>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
