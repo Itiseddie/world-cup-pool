@@ -1,0 +1,9 @@
+{
+  "name": "World Cup Office Pool",
+  "short_name": "Pool Standings",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f8fbfa",
+  "theme_color": "#103f3a",
+  "description": "A compact standings dashboard for a World Cup office pool."
+}
