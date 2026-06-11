@@ -76,6 +76,7 @@
   const scheduleStatus = document.querySelector("#scheduleStatus");
   const scheduleMatches = document.querySelector("#scheduleMatches");
   const participantsInAction = document.querySelector("#participantsInAction");
+  const teamsGrid = document.querySelector("#teamsGrid");
   const dashboardTitle = document.querySelector(".topbar h1");
   const resetButton = document.createElement("button");
   const participantNote = document.createElement("p");
@@ -176,6 +177,7 @@
   }
 
   function polishSchedule() {
+    syncOwnershipFromApp();
     scheduleView.querySelectorAll(".schedule-card").forEach(polishMatchCard);
     scheduleView.querySelectorAll(".action-row").forEach(polishActionRow);
     scheduleView.querySelectorAll("time").forEach(normalizeTimeLabel);
@@ -225,6 +227,7 @@
 
   function loadTeamsMaster() {
     if (ownershipRows.length) return Promise.resolve(ownershipRows);
+    if (syncOwnershipFromApp()) return Promise.resolve(ownershipRows);
     const params = new URLSearchParams({
       gid: TEAMS_GID,
       headers: "1",
@@ -267,6 +270,7 @@
   }
 
   function repairVisibleOwnership() {
+    syncOwnershipFromApp();
     if (ownershipRows.length) {
       repairScheduleCards(ownershipMap());
       return;
@@ -295,6 +299,34 @@
         badge.classList.remove("is-tbd");
       });
     });
+  }
+
+  function syncOwnershipFromApp() {
+    if (ownershipRows.length) return true;
+    const appTeams = window.worldCupPoolTeams;
+    if (Array.isArray(appTeams) && appTeams.length) {
+      ownershipRows = appTeams;
+      return true;
+    }
+    const domTeams = teamsFromRenderedCards();
+    if (domTeams.length) {
+      ownershipRows = domTeams;
+      return true;
+    }
+    return false;
+  }
+
+  function teamsFromRenderedCards() {
+    if (!teamsGrid) return [];
+    return [...teamsGrid.querySelectorAll(".team-card")].map((card) => {
+      const strong = card.querySelector("strong");
+      const meta = card.querySelector("header span:not(.badge)")?.textContent || "";
+      const clone = strong?.cloneNode(true);
+      clone?.querySelectorAll("img, .sr-only, .fifa-rank").forEach((node) => node.remove());
+      const teamName = clone?.textContent.trim() || "";
+      const participant = meta.split(/\s+-\s+/).pop()?.trim() || "";
+      return { "Team Name": teamName, "Assigned Participant": participant };
+    }).filter((team) => team["Team Name"] && team["Assigned Participant"]);
   }
 
   function cleanTeamName(strong) {
@@ -631,8 +663,23 @@
     childList: true,
     subtree: true
   });
+  if (teamsGrid) {
+    new MutationObserver(() => {
+      ownershipRows = [];
+      window.setTimeout(polishSchedule, 0);
+    }).observe(teamsGrid, {
+      childList: true,
+      subtree: true
+    });
+  }
   document.querySelectorAll(".tab[data-view]").forEach((tab) => {
     tab.addEventListener("click", () => window.setTimeout(syncDashboardTitle, 0));
+  });
+  window.addEventListener("worldCupPoolTeamsLoaded", (event) => {
+    if (Array.isArray(event.detail) && event.detail.length) {
+      ownershipRows = event.detail;
+      window.setTimeout(polishSchedule, 0);
+    }
   });
   scheduleParticipant?.addEventListener("change", () => window.setTimeout(showParticipantSchedule, 0));
   resetButton.addEventListener("click", () => {
