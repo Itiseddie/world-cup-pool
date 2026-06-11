@@ -76,6 +76,7 @@
   const scheduleStatus = document.querySelector("#scheduleStatus");
   const scheduleMatches = document.querySelector("#scheduleMatches");
   const participantsInAction = document.querySelector("#participantsInAction");
+  const teamsGrid = document.querySelector("#teamsGrid");
   const dashboardTitle = document.querySelector(".topbar h1");
   const resetButton = document.createElement("button");
   const participantNote = document.createElement("p");
@@ -83,6 +84,8 @@
   let ownershipRows = [];
   let tournamentMatches = null;
   let ownershipRepairStarted = false;
+  const scheduleMatchesByDate = new Map();
+  const scheduleScoresLoading = new Set();
 
   resetButton.type = "button";
   resetButton.className = "schedule-reset-button";
@@ -104,7 +107,7 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
 
@@ -174,11 +177,13 @@
   }
 
   function polishSchedule() {
+    syncOwnershipFromApp();
     scheduleView.querySelectorAll(".schedule-card").forEach(polishMatchCard);
     scheduleView.querySelectorAll(".action-row").forEach(polishActionRow);
     scheduleView.querySelectorAll("time").forEach(normalizeTimeLabel);
     sortRenderedSchedule();
     repairVisibleOwnership();
+    repairVisibleScores();
   }
 
   function sortRenderedSchedule() {
@@ -222,6 +227,7 @@
 
   function loadTeamsMaster() {
     if (ownershipRows.length) return Promise.resolve(ownershipRows);
+    if (syncOwnershipFromApp()) return Promise.resolve(ownershipRows);
     const params = new URLSearchParams({
       gid: TEAMS_GID,
       headers: "1",
@@ -264,6 +270,7 @@
   }
 
   function repairVisibleOwnership() {
+    syncOwnershipFromApp();
     if (ownershipRows.length) {
       repairScheduleCards(ownershipMap());
       return;
@@ -272,7 +279,10 @@
     ownershipRepairStarted = true;
     loadTeamsMaster()
       .then(() => repairScheduleCards(ownershipMap()))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        ownershipRepairStarted = false;
+      });
   }
 
   function repairScheduleCards(owners) {
@@ -291,10 +301,38 @@
     });
   }
 
+  function syncOwnershipFromApp() {
+    if (ownershipRows.length) return true;
+    const appTeams = window.worldCupPoolTeams;
+    if (Array.isArray(appTeams) && appTeams.length) {
+      ownershipRows = appTeams;
+      return true;
+    }
+    const domTeams = teamsFromRenderedCards();
+    if (domTeams.length) {
+      ownershipRows = domTeams;
+      return true;
+    }
+    return false;
+  }
+
+  function teamsFromRenderedCards() {
+    if (!teamsGrid) return [];
+    return [...teamsGrid.querySelectorAll(".team-card")].map((card) => {
+      const strong = card.querySelector("strong");
+      const meta = card.querySelector("header span:not(.badge)")?.textContent || "";
+      const clone = strong?.cloneNode(true);
+      clone?.querySelectorAll("img, .sr-only, .fifa-rank").forEach((node) => node.remove());
+      const teamName = clone?.textContent.trim() || "";
+      const participant = meta.split(/\s+-\s+/).pop()?.trim() || "";
+      return { "Team Name": teamName, "Assigned Participant": participant };
+    }).filter((team) => team["Team Name"] && team["Assigned Participant"]);
+  }
+
   function cleanTeamName(strong) {
     if (!strong) return "";
     const clone = strong.cloneNode(true);
-    clone.querySelectorAll("img, .sr-only").forEach((node) => node.remove());
+    clone.querySelectorAll("img, .sr-only, .match-score").forEach((node) => node.remove());
     return clone.textContent.trim();
   }
 
@@ -321,7 +359,9 @@
     const response = await fetch(`${ESPN_SCOREBOARD_URL}?${params.toString()}`);
     if (!response.ok) throw new Error("Could not load ESPN fixtures");
     const data = await response.json();
-    return (data.events || []).map(normalizeEvent);
+    const matches = (data.events || []).map(normalizeEvent);
+    scheduleMatchesByDate.set(dateValue, matches);
+    return matches;
   }
 
   function normalizeEvent(event) {
@@ -333,7 +373,8 @@
       return {
         name,
         homeAway: competitor.homeAway || "",
-        isPlaceholder: isPlaceholderTeam(name)
+        isPlaceholder: isPlaceholderTeam(name),
+        score: competitor.score ?? ""
       };
     });
     const away = teams.find((team) => team.homeAway === "away") || teams[0] || schedulePlaceholder();
@@ -342,13 +383,14 @@
       id: event.id,
       date: event.date || competition.date || "",
       status: event.status?.type?.shortDetail || event.status?.type?.description || event.status?.type?.name || "",
+      state: event.status?.type?.state || "",
       away,
       home
     };
   }
 
   function schedulePlaceholder() {
-    return { name: "TBD", homeAway: "", isPlaceholder: true };
+    return { name: "TBD", homeAway: "", isPlaceholder: true, score: "" };
   }
 
   function isPlaceholderTeam(name) {
@@ -460,6 +502,90 @@
     return `${flagHtml(owner.team)}${escapeHtml(team.name)}`;
   }
 
+  function teamLineDisplay(team, owners, match) {
+    return `${teamDisplay(team, owners)}${scoreHtml(team, match)}`;
+  }
+
+  function hasScore(team) {
+    return team && team.score !== undefined && team.score !== null && String(team.score) !== "";
+  }
+
+  function isPregame(match) {
+    const state = String(match?.state || "").toLowerCase();
+    const status = String(match?.status || "").toLowerCase();
+    return state === "pre" || status === "scheduled";
+  }
+
+  function scoreHtml(team, match) {
+    if (!hasScore(team) || isPregame(match)) return "";
+    return `<span class="match-score" aria-label="Score ${escapeHtml(team.score)}">${escapeHtml(team.score)}</span>`;
+  }
+
+  function repairVisibleScores() {
+    if (!scheduleMatches || scheduleParticipant?.value) return;
+    const dateValue = scheduleDate?.value;
+    if (!dateValue) return;
+    const cachedMatches = scheduleMatchesByDate.get(dateValue);
+    if (cachedMatches) {
+      applyScoresToCards(cachedMatches);
+      return;
+    }
+    if (scheduleScoresLoading.has(dateValue)) return;
+    scheduleScoresLoading.add(dateValue);
+    fetchScheduleDate(dateValue)
+      .then(applyScoresToCards)
+      .catch(() => {})
+      .finally(() => scheduleScoresLoading.delete(dateValue));
+  }
+
+  function applyScoresToCards(matches) {
+    scheduleMatches?.querySelectorAll(".schedule-card").forEach((card) => {
+      const teamBlocks = [...card.querySelectorAll(".match-team")];
+      if (teamBlocks.length !== 2) return;
+      const names = teamBlocks.map((teamBlock) => cleanTeamName(teamBlock.querySelector("strong")));
+      const match = findMatchForTeams(names, matches);
+      if (!match) return;
+      teamBlocks.forEach((teamBlock) => {
+        const teamName = cleanTeamName(teamBlock.querySelector("strong"));
+        const team = teamForName(match, teamName);
+        if (team) updateScoreBadge(teamBlock, team, match);
+      });
+    });
+  }
+
+  function findMatchForTeams(teamNames, matches) {
+    const [first, second] = teamNames.map(scheduleLookupKey);
+    return matches.find((match) => {
+      const away = scheduleLookupKey(match.away.name);
+      const home = scheduleLookupKey(match.home.name);
+      return (first === away && second === home) || (first === home && second === away);
+    });
+  }
+
+  function teamForName(match, teamName) {
+    const key = scheduleLookupKey(teamName);
+    if (scheduleLookupKey(match.away.name) === key) return match.away;
+    if (scheduleLookupKey(match.home.name) === key) return match.home;
+    return null;
+  }
+
+  function updateScoreBadge(teamBlock, team, match) {
+    const strong = teamBlock.querySelector("strong");
+    if (!strong) return;
+    let score = strong.querySelector(".match-score");
+    if (!hasScore(team) || isPregame(match)) {
+      score?.remove();
+      return;
+    }
+    if (!score) {
+      score = document.createElement("span");
+      score.className = "match-score";
+      strong.appendChild(score);
+    }
+    score.textContent = String(team.score);
+    score.setAttribute("aria-label", `Score ${team.score}`);
+  }
+
   function ownerBadges(match, owners) {
     return matchOwners(match, owners)
       .map((owner) => `<span class="owner-badge ${owner === "TBD" ? "is-tbd" : ""}">${escapeHtml(owner)}</span>`)
@@ -484,7 +610,7 @@
       <article class="schedule-card">
         <time>${escapeHtml(formatParticipantKickoff(match.date))}</time>
         <div class="match-main">
-          <strong>${teamDisplay(match.away, owners)} <span>vs</span> ${teamDisplay(match.home, owners)}</strong>
+          <strong>${teamLineDisplay(match.away, owners, match)} <span>vs</span> ${teamLineDisplay(match.home, owners, match)}</strong>
           <small>${escapeHtml(match.status || "Status TBD")}</small>
         </div>
         <div class="match-owners">${ownerBadges(match, owners)}</div>
@@ -495,14 +621,14 @@
       return [match.away, match.home].map((team, index, allTeams) => {
         const opponent = allTeams[index === 0 ? 1 : 0];
         const owner = ownerForTeam(team, owners).participant;
-        return { participant: owner, time: formatParticipantKickoff(match.date), team, opponent };
+        return { participant: owner, time: formatParticipantKickoff(match.date), team, opponent, match };
       });
     }).filter((row) => row.participant === participant).map((row) => `
       <article class="action-row">
         <strong>${escapeHtml(row.participant)}</strong>
         <time>${escapeHtml(row.time)}</time>
-        <span>${teamDisplay(row.team, owners)}</span>
-        <span>${teamDisplay(row.opponent, owners)}</span>
+        <span>${teamLineDisplay(row.team, owners, row.match)}</span>
+        <span>${teamLineDisplay(row.opponent, owners, row.match)}</span>
       </article>
     `).join("");
     polishSchedule();
@@ -537,8 +663,23 @@
     childList: true,
     subtree: true
   });
+  if (teamsGrid) {
+    new MutationObserver(() => {
+      ownershipRows = [];
+      window.setTimeout(polishSchedule, 0);
+    }).observe(teamsGrid, {
+      childList: true,
+      subtree: true
+    });
+  }
   document.querySelectorAll(".tab[data-view]").forEach((tab) => {
     tab.addEventListener("click", () => window.setTimeout(syncDashboardTitle, 0));
+  });
+  window.addEventListener("worldCupPoolTeamsLoaded", (event) => {
+    if (Array.isArray(event.detail) && event.detail.length) {
+      ownershipRows = event.detail;
+      window.setTimeout(polishSchedule, 0);
+    }
   });
   scheduleParticipant?.addEventListener("change", () => window.setTimeout(showParticipantSchedule, 0));
   resetButton.addEventListener("click", () => {

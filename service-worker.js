@@ -1,12 +1,12 @@
-const CACHE_NAME = "world-cup-pool-v10-schedule-filter";
+const CACHE_NAME = "world-cup-pool-v12-schedule-scores";
 const ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
   "./styles.css?v=schedule-filter",
-  "./schedule-polish.css?v=5",
+  "./schedule-polish.css?v=6",
   "./app.js?v=schedule-filter",
-  "./schedule-polish.js?v=8",
+  "./schedule-polish.js?v=10",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

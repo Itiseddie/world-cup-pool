@@ -61,6 +61,23 @@
   gap: 6px;
 }
 
+.match-team strong {
+  width: 100%;
+}
+
+.match-score {
+  background: var(--green);
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-left: auto;
+  min-width: 28px;
+  padding: 5px 7px;
+  text-align: center;
+}
+
 .versus {
   align-self: center;
   color: var(--muted);
