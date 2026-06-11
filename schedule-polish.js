@@ -275,7 +275,10 @@
     ownershipRepairStarted = true;
     loadTeamsMaster()
       .then(() => repairScheduleCards(ownershipMap()))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        ownershipRepairStarted = false;
+      });
   }
 
   function repairScheduleCards(owners) {
