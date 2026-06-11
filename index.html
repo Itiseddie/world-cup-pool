@@ -11,7 +11,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" href="icons/icon-192.png">
-    <link rel="stylesheet" href="styles.css?v=ties">
+    <link rel="stylesheet" href="styles.css?v=schedule">
+    <link rel="stylesheet" href="schedule-polish.css?v=1">
     <style>
       .rank {
         font-size: 0.95rem;
@@ -71,13 +72,14 @@
       </section>
 
       <nav class="tabs" aria-label="Dashboard views">
-        <button class="tab is-active" type="button" data-view="leaderboard">Leaderboard</button>
+        <button class="tab" type="button" data-view="leaderboard">Leaderboard</button>
         <button class="tab" type="button" data-view="teams">Teams</button>
+        <button class="tab is-active" type="button" data-view="schedule">Schedule</button>
         <button class="tab" type="button" data-view="rules">Rules</button>
         <a class="tab link-tab" href="?view=widget">Widget</a>
       </nav>
 
-      <section id="leaderboardView" class="view is-active">
+      <section id="leaderboardView" class="view">
         <div class="panel-head">
           <div>
             <h2>Pool Standings</h2>
@@ -103,6 +105,36 @@
           </label>
         </div>
         <div id="teamsGrid" class="teams-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="scheduleView" class="view is-active">
+        <div class="panel-head">
+          <div>
+            <h2>Schedule</h2>
+            <p class="rank-note">Kickoff times shown in Pacific Time.</p>
+          </div>
+          <div class="schedule-controls">
+            <label class="search">
+              <span>Date</span>
+              <input id="scheduleDate" type="date">
+            </label>
+            <label class="search">
+              <span>Participant</span>
+              <select id="scheduleParticipant">
+                <option value="">Everyone</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div class="schedule-status" id="scheduleStatus" aria-live="polite">Loading schedule</div>
+        <section class="schedule-section" aria-labelledby="matchesHeading">
+          <h3 id="matchesHeading">Matches</h3>
+          <div id="scheduleMatches" class="schedule-list"></div>
+        </section>
+        <section class="schedule-section" aria-labelledby="participantsHeading">
+          <h3 id="participantsHeading">Participants In Action</h3>
+          <div id="participantsInAction" class="schedule-list participant-action-list"></div>
+        </section>
       </section>
 
       <section id="rulesView" class="view">
@@ -146,6 +178,7 @@
       </section>
     </main>
 
-    <script src="app.js?v=ties"></script>
+    <script src="app.js?v=schedule"></script>
+    <script src="schedule-polish.js?v=1"></script>
   </body>
 </html>
