@@ -74,12 +74,21 @@
   width: fit-content;
 }
 
+#scheduleView .panel-head {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
 .schedule-controls {
-  grid-template-columns: minmax(150px, 170px) minmax(190px, 240px) auto;
+  flex: 1 1 460px;
+  grid-template-columns: minmax(0, 170px) minmax(0, 240px) max-content;
+  justify-content: end;
   max-width: 100%;
 }
 
-.schedule-controls .search {
+.schedule-controls .search,
+.schedule-controls input,
+.schedule-controls select {
   min-width: 0;
 }
 
@@ -131,6 +140,7 @@
 @media (max-width: 860px) {
   .schedule-controls {
     grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .match-meta {
