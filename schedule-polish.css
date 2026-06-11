@@ -88,6 +88,10 @@
   font-size: 1rem;
 }
 
+.action-row .action-owner span::before {
+  content: none;
+}
+
 .action-opponent::before {
   color: var(--muted);
   content: "vs ";
