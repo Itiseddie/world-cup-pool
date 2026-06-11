@@ -75,6 +75,7 @@
   const scheduleStatus = document.querySelector("#scheduleStatus");
   const scheduleMatches = document.querySelector("#scheduleMatches");
   const participantsInAction = document.querySelector("#participantsInAction");
+  const dashboardTitle = document.querySelector(".topbar h1");
   const resetButton = document.createElement("button");
   const participantNote = document.createElement("p");
 
@@ -89,6 +90,12 @@
   participantNote.hidden = true;
   participantNote.textContent = "Participant view shows all tournament matches. To look for just today's games, switch Participant back to Everyone.";
   scheduleParticipant?.closest(".schedule-controls")?.append(resetButton, participantNote);
+
+  function syncDashboardTitle() {
+    const activeTab = document.querySelector(".tab.is-active[data-view]");
+    if (!dashboardTitle || !activeTab) return;
+    dashboardTitle.textContent = activeTab.textContent.trim() || "Schedule";
+  }
 
   function escapeHtml(value) {
     return String(value || "")
@@ -492,6 +499,9 @@
     childList: true,
     subtree: true
   });
+  document.querySelectorAll(".tab[data-view]").forEach((tab) => {
+    tab.addEventListener("click", () => window.setTimeout(syncDashboardTitle, 0));
+  });
   scheduleParticipant?.addEventListener("change", () => window.setTimeout(showParticipantSchedule, 0));
   resetButton.addEventListener("click", () => {
     if (scheduleParticipant) {
@@ -504,5 +514,6 @@
       scheduleDate.dispatchEvent(new Event("change", { bubbles: true }));
     }
   });
+  syncDashboardTitle();
   polishSchedule();
 })();
