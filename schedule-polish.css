@@ -76,6 +76,11 @@
 
 .schedule-controls {
   grid-template-columns: minmax(150px, 170px) minmax(190px, 240px) auto;
+  max-width: 100%;
+}
+
+.schedule-controls .search {
+  min-width: 0;
 }
 
 .schedule-reset-button {
@@ -88,6 +93,7 @@
   font-weight: 800;
   min-height: 40px;
   padding: 8px 12px;
+  white-space: nowrap;
 }
 
 .schedule-filter-note {
