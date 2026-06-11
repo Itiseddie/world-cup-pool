@@ -18,22 +18,54 @@
   };
 
   const FLAG_CODES = {
+    algeria: "dz",
     argentina: "ar",
     australia: "au",
+    austria: "at",
+    belgium: "be",
+    "bosnia and herzegovina": "ba",
     brazil: "br",
     canada: "ca",
+    "cape verde": "cv",
+    colombia: "co",
+    croatia: "hr",
+    curacao: "cw",
     czechia: "cz",
     "dr congo": "cd",
+    ecuador: "ec",
+    egypt: "eg",
     england: "gb-eng",
     france: "fr",
     germany: "de",
+    ghana: "gh",
+    haiti: "ht",
+    iran: "ir",
+    iraq: "iq",
     "ivory coast": "ci",
     japan: "jp",
+    jordan: "jo",
     mexico: "mx",
+    morocco: "ma",
+    netherlands: "nl",
+    "new zealand": "nz",
+    norway: "no",
+    panama: "pa",
+    paraguay: "py",
+    portugal: "pt",
+    qatar: "qa",
+    "saudi arabia": "sa",
+    scotland: "gb-sct",
+    senegal: "sn",
     "south africa": "za",
     "south korea": "kr",
     spain: "es",
-    "united states": "us"
+    sweden: "se",
+    switzerland: "ch",
+    tunisia: "tn",
+    turkiye: "tr",
+    "united states": "us",
+    uruguay: "uy",
+    uzbekistan: "uz"
   };
 
   const scheduleView = document.querySelector("#scheduleView");
@@ -43,16 +75,27 @@
   const scheduleStatus = document.querySelector("#scheduleStatus");
   const scheduleMatches = document.querySelector("#scheduleMatches");
   const participantsInAction = document.querySelector("#participantsInAction");
+  const resetButton = document.createElement("button");
+  const participantNote = document.createElement("p");
 
   let ownershipRows = [];
   let tournamentMatches = null;
+
+  resetButton.type = "button";
+  resetButton.className = "schedule-reset-button";
+  resetButton.textContent = "Reset to default";
+  resetButton.hidden = true;
+  participantNote.className = "schedule-filter-note";
+  participantNote.hidden = true;
+  participantNote.textContent = "Participant view shows all tournament matches. To look for just today's games, switch Participant back to Everyone.";
+  scheduleParticipant?.closest(".schedule-controls")?.append(resetButton, participantNote);
 
   function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
 
@@ -248,6 +291,19 @@
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   }
 
+  function pacificDateInput(date) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: PACIFIC_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date).reduce((record, part) => {
+      record[part.type] = part.value;
+      return record;
+    }, {});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
   function ownershipMap() {
     const owners = new Map();
     ownershipRows.forEach((team) => {
@@ -295,6 +351,18 @@
     return `${time} PT`;
   }
 
+  function formatParticipantKickoff(value) {
+    if (!value) return "Date TBD, Time TBD";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Date TBD, Time TBD";
+    const day = date.toLocaleDateString([], {
+      timeZone: PACIFIC_TIME_ZONE,
+      month: "short",
+      day: "numeric"
+    });
+    return `${day}, ${formatKickoff(value)}`;
+  }
+
   function flagHtml(teamName) {
     const code = FLAG_CODES[scheduleLookupKey(teamName)];
     const label = escapeHtml(teamName);
@@ -327,7 +395,7 @@
 
     scheduleMatches.innerHTML = filtered.map((match) => `
       <article class="schedule-card">
-        <time>${escapeHtml(formatKickoff(match.date))}</time>
+        <time>${escapeHtml(formatParticipantKickoff(match.date))}</time>
         <div class="match-main">
           <strong>${teamDisplay(match.away, owners)} <span>vs</span> ${teamDisplay(match.home, owners)}</strong>
           <small>${escapeHtml(match.status || "Status TBD")}</small>
@@ -340,7 +408,7 @@
       return [match.away, match.home].map((team, index, allTeams) => {
         const opponent = allTeams[index === 0 ? 1 : 0];
         const owner = ownerForTeam(team, owners).participant;
-        return { participant: owner, time: formatKickoff(match.date), team, opponent };
+        return { participant: owner, time: formatParticipantKickoff(match.date), team, opponent };
       });
     }).filter((row) => row.participant === participant).map((row) => `
       <article class="action-row">
@@ -357,10 +425,17 @@
     const participant = scheduleParticipant?.value || "";
     if (!participant) {
       if (scheduleDate) scheduleDate.disabled = false;
+      resetButton.hidden = true;
+      participantNote.hidden = true;
       window.setTimeout(polishSchedule, 0);
       return;
     }
-    if (scheduleDate) scheduleDate.disabled = true;
+    if (scheduleDate) {
+      scheduleDate.value = "";
+      scheduleDate.disabled = true;
+    }
+    resetButton.hidden = false;
+    participantNote.hidden = false;
     if (scheduleStatus) scheduleStatus.textContent = `Loading all matches for ${participant}`;
     try {
       await loadTeamsMaster();
@@ -376,5 +451,16 @@
     subtree: true
   });
   scheduleParticipant?.addEventListener("change", () => window.setTimeout(showParticipantSchedule, 0));
+  resetButton.addEventListener("click", () => {
+    if (scheduleParticipant) {
+      scheduleParticipant.value = "";
+      scheduleParticipant.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+    if (scheduleDate) {
+      scheduleDate.disabled = false;
+      scheduleDate.value = pacificDateInput(new Date());
+      scheduleDate.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+  });
   polishSchedule();
 })();
