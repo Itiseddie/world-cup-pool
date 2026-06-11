@@ -78,10 +78,12 @@
 
   function polishActionRow(row) {
     if (row.dataset.polished === "true") return;
-    const participant = row.querySelector("strong");
-    const time = row.querySelector("time");
-    const team = row.querySelector("span:nth-of-type(1)");
-    const opponent = row.querySelector("span:nth-of-type(2)");
+    const existingOwner = row.querySelector(":scope > .action-owner");
+    const directSpans = [...row.querySelectorAll(":scope > span")];
+    const participant = existingOwner?.querySelector("strong") || row.querySelector(":scope > strong");
+    const time = row.querySelector(":scope > time");
+    const team = existingOwner?.querySelector(":scope > span") || directSpans[0];
+    const opponent = row.querySelector(":scope > .action-opponent") || directSpans[1];
     if (!participant || !time || !team || !opponent) {
       normalizeTimeLabel(time);
       return;
