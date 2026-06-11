@@ -168,6 +168,46 @@
     scheduleView.querySelectorAll(".schedule-card").forEach(polishMatchCard);
     scheduleView.querySelectorAll(".action-row").forEach(polishActionRow);
     scheduleView.querySelectorAll("time").forEach(normalizeTimeLabel);
+    sortRenderedSchedule();
+  }
+
+  function sortRenderedSchedule() {
+    sortCardsByTime(scheduleMatches);
+    sortCardsByTime(participantsInAction);
+  }
+
+  function sortCardsByTime(container) {
+    if (!container) return;
+    const cards = [...container.children].filter((child) => child.matches(".schedule-card, .action-row"));
+    if (cards.length < 2) return;
+    const sorted = [...cards].sort((a, b) => cardTimeValue(a) - cardTimeValue(b));
+    const changed = sorted.some((card, index) => card !== cards[index]);
+    if (!changed) return;
+    sorted.forEach((card) => container.appendChild(card));
+  }
+
+  function cardTimeValue(card) {
+    return timeLabelValue(card.querySelector("time")?.textContent || "");
+  }
+
+  function timeLabelValue(label) {
+    const clean = String(label || "").replace(/\s+PT$/i, "").trim();
+    const match = clean.match(/^(?:(\w{3})\s+(\d{1,2}),\s+)?(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+    if (!match) return Number.POSITIVE_INFINITY;
+    const [, month, day, rawHour, rawMinute = "0", meridiem] = match;
+    let hour = Number(rawHour);
+    const minute = Number(rawMinute);
+    if (meridiem) {
+      const upper = meridiem.toUpperCase();
+      if (upper === "PM" && hour !== 12) hour += 12;
+      if (upper === "AM" && hour === 12) hour = 0;
+    }
+    const dayOffset = month ? monthIndex(month) * 40 + Number(day || 0) : 0;
+    return dayOffset * 1440 + hour * 60 + minute;
+  }
+
+  function monthIndex(month) {
+    return ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].indexOf(String(month).slice(0, 3).toLowerCase());
   }
 
   function loadTeamsMaster() {
@@ -382,7 +422,9 @@
   }
 
   function renderParticipantMatches(participant, matches, owners) {
-    const filtered = matches.filter((match) => matchOwners(match, owners).includes(participant));
+    const filtered = matches
+      .filter((match) => matchOwners(match, owners).includes(participant))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
     if (scheduleStatus) {
       scheduleStatus.textContent = `${filtered.length} ${filtered.length === 1 ? "match" : "matches"} for ${participant}`;
     }
