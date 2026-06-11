@@ -74,6 +74,30 @@
   width: fit-content;
 }
 
+.schedule-controls {
+  grid-template-columns: minmax(150px, 170px) minmax(190px, 240px) auto;
+}
+
+.schedule-reset-button {
+  align-self: end;
+  background: var(--green);
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+  min-height: 40px;
+  padding: 8px 12px;
+}
+
+.schedule-filter-note {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .action-row {
   grid-template-columns: minmax(220px, 1.2fr) 108px minmax(180px, 1fr);
   gap: 14px;
@@ -99,6 +123,10 @@
 }
 
 @media (max-width: 860px) {
+  .schedule-controls {
+    grid-template-columns: 1fr;
+  }
+
   .match-meta {
     border-right: 0;
     border-bottom: 1px solid var(--line);
