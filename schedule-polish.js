@@ -1,19 +1,73 @@
 (function () {
+  const SHEET_ID = "1Ac5ecT-orrmgJ2h4-a8N-YYyMS3R_AosYFcgoATIBgk";
+  const TEAMS_GID = "1";
+  const ESPN_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+  const WORLD_CUP_START_DATE = "2026-06-11";
+  const WORLD_CUP_END_DATE = "2026-07-19";
+  const PACIFIC_TIME_ZONE = "America/Los_Angeles";
+
+  const TEAM_ALIASES = {
+    "congo dr": "dr congo",
+    "cote d ivoire": "ivory coast",
+    "czech republic": "czechia",
+    "d r congo": "dr congo",
+    "dr congo": "dr congo",
+    "ivory coast": "ivory coast",
+    "united states": "united states",
+    "usa": "united states"
+  };
+
+  const FLAG_CODES = {
+    argentina: "ar",
+    australia: "au",
+    brazil: "br",
+    canada: "ca",
+    czechia: "cz",
+    "dr congo": "cd",
+    england: "gb-eng",
+    france: "fr",
+    germany: "de",
+    "ivory coast": "ci",
+    japan: "jp",
+    mexico: "mx",
+    "south africa": "za",
+    "south korea": "kr",
+    spain: "es",
+    "united states": "us"
+  };
+
   const scheduleView = document.querySelector("#scheduleView");
   if (!scheduleView) return;
+  const scheduleDate = document.querySelector("#scheduleDate");
+  const scheduleParticipant = document.querySelector("#scheduleParticipant");
+  const scheduleStatus = document.querySelector("#scheduleStatus");
+  const scheduleMatches = document.querySelector("#scheduleMatches");
+  const participantsInAction = document.querySelector("#participantsInAction");
+
+  let ownershipRows = [];
+  let tournamentMatches = null;
 
   function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
 
   function normalizeTimeLabel(time) {
     if (!time || /TBD|PT$/.test(time.textContent)) return;
     time.textContent = time.textContent.replace(/\s(?:GMT[+-]\d+|PDT|PST)$/i, " PT");
+  }
+
+  function normalizeKey(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
   }
 
   function polishMatchCard(card) {
@@ -73,9 +127,254 @@
     scheduleView.querySelectorAll("time").forEach(normalizeTimeLabel);
   }
 
+  function loadTeamsMaster() {
+    if (ownershipRows.length) return Promise.resolve(ownershipRows);
+    const params = new URLSearchParams({
+      gid: TEAMS_GID,
+      headers: "1",
+      tqx: ""
+    });
+    const callback = `scheduleTeams_${Date.now()}`.replace(/\W/g, "_");
+    params.set("tqx", `responseHandler:${callback}`);
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      const timeout = window.setTimeout(() => {
+        cleanup();
+        reject(new Error("Team ownership request timed out"));
+      }, 12000);
+
+      function cleanup() {
+        window.clearTimeout(timeout);
+        delete window[callback];
+        script.remove();
+      }
+
+      window[callback] = (response) => {
+        cleanup();
+        if (response.status === "error") {
+          reject(new Error(response.errors?.[0]?.detailed_message || "Could not load team ownership"));
+          return;
+        }
+        ownershipRows = tableToRows(response.table);
+        resolve(ownershipRows);
+      };
+
+      script.onerror = () => {
+        cleanup();
+        reject(new Error("Could not load team ownership"));
+      };
+
+      script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?${params.toString()}`;
+      document.head.appendChild(script);
+    });
+  }
+
+  function tableToRows(table) {
+    const headers = table.cols.map((col, index) => col.label || `Column ${index + 1}`);
+    return table.rows
+      .map((row) => headers.reduce((record, header, index) => {
+        const cell = row.c[index];
+        record[header] = cell ? cell.f || cell.v || "" : "";
+        return record;
+      }, {}))
+      .filter((row) => Object.values(row).some(Boolean));
+  }
+
+  async function fetchTournamentMatches() {
+    if (tournamentMatches) return tournamentMatches;
+    const batches = await Promise.all(dateRange(WORLD_CUP_START_DATE, WORLD_CUP_END_DATE).map(fetchScheduleDate));
+    tournamentMatches = batches.flat().sort((a, b) => new Date(a.date) - new Date(b.date));
+    return tournamentMatches;
+  }
+
+  async function fetchScheduleDate(dateValue) {
+    const params = new URLSearchParams({ dates: dateValue.replace(/-/g, "") });
+    const response = await fetch(`${ESPN_SCOREBOARD_URL}?${params.toString()}`);
+    if (!response.ok) throw new Error("Could not load ESPN fixtures");
+    const data = await response.json();
+    return (data.events || []).map(normalizeEvent);
+  }
+
+  function normalizeEvent(event) {
+    const competition = event.competitions?.[0] || {};
+    const competitors = competition.competitors || [];
+    const teams = competitors.map((competitor) => {
+      const team = competitor.team || {};
+      const name = team.displayName || team.name || team.shortDisplayName || competitor.displayName || competitor.name || "TBD";
+      return {
+        name,
+        homeAway: competitor.homeAway || "",
+        isPlaceholder: isPlaceholderTeam(name)
+      };
+    });
+    const away = teams.find((team) => team.homeAway === "away") || teams[0] || schedulePlaceholder();
+    const home = teams.find((team) => team.homeAway === "home") || teams[1] || schedulePlaceholder();
+    return {
+      id: event.id,
+      date: event.date || competition.date || "",
+      status: event.status?.type?.shortDetail || event.status?.type?.description || event.status?.type?.name || "",
+      away,
+      home
+    };
+  }
+
+  function schedulePlaceholder() {
+    return { name: "TBD", homeAway: "", isPlaceholder: true };
+  }
+
+  function isPlaceholderTeam(name) {
+    const key = normalizeKey(name);
+    return !key || /\btbd\b|to be determined|winner|runner up|runnerup|group [a-z0-9]+|^[0-9][a-z]$/.test(key);
+  }
+
+  function dateRange(startDate, endDate) {
+    const dates = [];
+    const current = dateInputToLocalDate(startDate);
+    const end = dateInputToLocalDate(endDate);
+    while (current <= end) {
+      dates.push(localDateInput(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }
+
+  function dateInputToLocalDate(value) {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function localDateInput(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  }
+
+  function ownershipMap() {
+    const owners = new Map();
+    ownershipRows.forEach((team) => {
+      const teamName = team["Team Name"];
+      const participant = team["Assigned Participant"];
+      if (!teamName || !participant) return;
+      const canonicalKey = normalizeKey(teamName);
+      owners.set(canonicalKey, { participant, team: teamName });
+      owners.set(scheduleLookupKey(teamName), { participant, team: teamName });
+      Object.entries(TEAM_ALIASES).forEach(([alias, canonical]) => {
+        if (alias === canonicalKey || canonical === canonicalKey || canonical === scheduleLookupKey(teamName)) {
+          owners.set(alias, { participant, team: teamName });
+          owners.set(canonical, { participant, team: teamName });
+        }
+      });
+    });
+    return owners;
+  }
+
+  function scheduleLookupKey(teamName) {
+    const key = normalizeKey(teamName);
+    return TEAM_ALIASES[key] || key;
+  }
+
+  function ownerForTeam(team, owners) {
+    if (!team || team.isPlaceholder || isPlaceholderTeam(team.name)) return { participant: "TBD", team: team?.name || "TBD" };
+    return owners.get(scheduleLookupKey(team.name)) || { participant: "TBD", team: team.name };
+  }
+
+  function matchOwners(match, owners) {
+    return [ownerForTeam(match.away, owners).participant, ownerForTeam(match.home, owners).participant]
+      .filter(Boolean)
+      .filter((owner, index, allOwners) => allOwners.indexOf(owner) === index);
+  }
+
+  function formatKickoff(value) {
+    if (!value) return "Time TBD";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Time TBD";
+    const time = date.toLocaleTimeString([], {
+      timeZone: PACIFIC_TIME_ZONE,
+      hour: "numeric",
+      minute: "2-digit"
+    });
+    return `${time} PT`;
+  }
+
+  function flagHtml(teamName) {
+    const code = FLAG_CODES[scheduleLookupKey(teamName)];
+    const label = escapeHtml(teamName);
+    return code ? `<img class="flag" src="https://flagcdn.com/w40/${code}.png" alt="" aria-hidden="true" loading="lazy"><span class="sr-only">${label} flag</span>` : "";
+  }
+
+  function teamDisplay(team, owners) {
+    if (!team || team.isPlaceholder || isPlaceholderTeam(team.name)) return escapeHtml(team?.name || "TBD");
+    const owner = ownerForTeam(team, owners);
+    return `${flagHtml(owner.team)}${escapeHtml(team.name)}`;
+  }
+
+  function ownerBadges(match, owners) {
+    return matchOwners(match, owners)
+      .map((owner) => `<span class="owner-badge ${owner === "TBD" ? "is-tbd" : ""}">${escapeHtml(owner)}</span>`)
+      .join("");
+  }
+
+  function renderParticipantMatches(participant, matches, owners) {
+    const filtered = matches.filter((match) => matchOwners(match, owners).includes(participant));
+    if (scheduleStatus) {
+      scheduleStatus.textContent = `${filtered.length} ${filtered.length === 1 ? "match" : "matches"} for ${participant}`;
+    }
+    if (!filtered.length) {
+      const empty = `<p class="empty-state">No matches found for this participant.</p>`;
+      scheduleMatches.innerHTML = empty;
+      participantsInAction.innerHTML = empty;
+      return;
+    }
+
+    scheduleMatches.innerHTML = filtered.map((match) => `
+      <article class="schedule-card">
+        <time>${escapeHtml(formatKickoff(match.date))}</time>
+        <div class="match-main">
+          <strong>${teamDisplay(match.away, owners)} <span>vs</span> ${teamDisplay(match.home, owners)}</strong>
+          <small>${escapeHtml(match.status || "Status TBD")}</small>
+        </div>
+        <div class="match-owners">${ownerBadges(match, owners)}</div>
+      </article>
+    `).join("");
+
+    participantsInAction.innerHTML = filtered.flatMap((match) => {
+      return [match.away, match.home].map((team, index, allTeams) => {
+        const opponent = allTeams[index === 0 ? 1 : 0];
+        const owner = ownerForTeam(team, owners).participant;
+        return { participant: owner, time: formatKickoff(match.date), team, opponent };
+      });
+    }).filter((row) => row.participant === participant).map((row) => `
+      <article class="action-row">
+        <strong>${escapeHtml(row.participant)}</strong>
+        <time>${escapeHtml(row.time)}</time>
+        <span>${teamDisplay(row.team, owners)}</span>
+        <span>${teamDisplay(row.opponent, owners)}</span>
+      </article>
+    `).join("");
+    polishSchedule();
+  }
+
+  async function showParticipantSchedule() {
+    const participant = scheduleParticipant?.value || "";
+    if (!participant) {
+      if (scheduleDate) scheduleDate.disabled = false;
+      window.setTimeout(polishSchedule, 0);
+      return;
+    }
+    if (scheduleDate) scheduleDate.disabled = true;
+    if (scheduleStatus) scheduleStatus.textContent = `Loading all matches for ${participant}`;
+    try {
+      await loadTeamsMaster();
+      const matches = await fetchTournamentMatches();
+      renderParticipantMatches(participant, matches, ownershipMap());
+    } catch (error) {
+      if (scheduleStatus) scheduleStatus.textContent = error.message || "Could not load participant fixtures";
+    }
+  }
+
   new MutationObserver(polishSchedule).observe(scheduleView, {
     childList: true,
     subtree: true
   });
+  scheduleParticipant?.addEventListener("change", () => window.setTimeout(showParticipantSchedule, 0));
   polishSchedule();
 })();
