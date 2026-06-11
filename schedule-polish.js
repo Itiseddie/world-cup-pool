@@ -7,6 +7,7 @@
   const PACIFIC_TIME_ZONE = "America/Los_Angeles";
 
   const TEAM_ALIASES = {
+    "bosnia herzegovina": "bosnia and herzegovina",
     "congo dr": "dr congo",
     "cote d ivoire": "ivory coast",
     "czech republic": "czechia",
@@ -81,6 +82,7 @@
 
   let ownershipRows = [];
   let tournamentMatches = null;
+  let ownershipRepairStarted = false;
 
   resetButton.type = "button";
   resetButton.className = "schedule-reset-button";
@@ -176,6 +178,7 @@
     scheduleView.querySelectorAll(".action-row").forEach(polishActionRow);
     scheduleView.querySelectorAll("time").forEach(normalizeTimeLabel);
     sortRenderedSchedule();
+    repairVisibleOwnership();
   }
 
   function sortRenderedSchedule() {
@@ -258,6 +261,41 @@
       script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?${params.toString()}`;
       document.head.appendChild(script);
     });
+  }
+
+  function repairVisibleOwnership() {
+    if (ownershipRows.length) {
+      repairScheduleCards(ownershipMap());
+      return;
+    }
+    if (ownershipRepairStarted) return;
+    ownershipRepairStarted = true;
+    loadTeamsMaster()
+      .then(() => repairScheduleCards(ownershipMap()))
+      .catch(() => {});
+  }
+
+  function repairScheduleCards(owners) {
+    scheduleView.querySelectorAll(".schedule-card").forEach((card) => {
+      const teams = [...card.querySelectorAll(".match-team")];
+      teams.forEach((teamBlock) => {
+        const teamName = cleanTeamName(teamBlock.querySelector("strong"));
+        const badge = teamBlock.querySelector(".owner-badge");
+        if (!teamName || !badge) return;
+        const owner = ownerForTeam({ name: teamName, isPlaceholder: isPlaceholderTeam(teamName) }, owners).participant;
+        if (!owner || owner === "TBD") return;
+        if (badge.textContent.trim() === owner && !badge.classList.contains("is-tbd")) return;
+        badge.textContent = owner;
+        badge.classList.remove("is-tbd");
+      });
+    });
+  }
+
+  function cleanTeamName(strong) {
+    if (!strong) return "";
+    const clone = strong.cloneNode(true);
+    clone.querySelectorAll("img, .sr-only").forEach((node) => node.remove());
+    return clone.textContent.trim();
   }
 
   function tableToRows(table) {
