@@ -83,7 +83,7 @@
     const participant = existingOwner?.querySelector("strong") || row.querySelector(":scope > strong");
     const time = row.querySelector(":scope > time");
     const team = existingOwner?.querySelector(":scope > span") || directSpans[0];
-    const opponent = row.querySelector(":scope > .action-opponent") || directSpans[1];
+    const opponent = row.querySelector(":scope > .action-opponent") || row.querySelector(":scope > .action-opponent-wrap .action-opponent") || directSpans[1];
     if (!participant || !time || !team || !opponent) {
       normalizeTimeLabel(time);
       return;
@@ -91,14 +91,22 @@
 
     normalizeTimeLabel(time);
     row.innerHTML = `
-      <div class="action-owner">
+      <div class="action-heading">
         <strong>${escapeHtml(participant.textContent)}</strong>
-        <span>${team.innerHTML}</span>
+        <time>${escapeHtml(time.textContent)}</time>
       </div>
-      <time>${escapeHtml(time.textContent)}</time>
-      <span class="action-opponent">${opponent.innerHTML}</span>
+      <div class="action-matchup">
+        <span class="action-team">${cleanActionTeamHtml(team)}</span>
+        <span class="action-opponent">${cleanActionTeamHtml(opponent)}</span>
+      </div>
     `;
     row.dataset.polished = "true";
+  }
+
+  function cleanActionTeamHtml(element) {
+    const copy = element.cloneNode(true);
+    copy.querySelectorAll(".action-vs").forEach((node) => node.remove());
+    return copy.innerHTML.replace(/\bvs\b/gi, "").trim();
   }
 
   function sortRenderedSchedule() {
