@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-cup-pool-v17-action-score-layout";
+const CACHE_NAME = "world-cup-pool-v18-action-score-inline";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const ASSETS = [
   "./styles.css?v=schedule-filter",
   "./schedule-polish.css?v=6",
   "./app.js?v=schedule-scores-safe",
-  "./schedule-polish.js?v=14",
+  "./schedule-polish.js?v=15",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
