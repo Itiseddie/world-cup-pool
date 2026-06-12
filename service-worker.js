@@ -1,11 +1,11 @@
-const CACHE_NAME = "world-cup-pool-v20-action-score-pseudo-fix";
+const CACHE_NAME = "world-cup-pool-v21-bosnia-alias";
 const ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
   "./styles.css?v=schedule-filter",
   "./schedule-polish.css?v=6",
-  "./app.js?v=schedule-scores-safe",
+  "./app.js?v=schedule-bosnia-alias",
   "./schedule-polish.js?v=17",
   "./manifest.json",
   "./icons/icon-192.png",
