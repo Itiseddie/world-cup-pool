@@ -476,6 +476,7 @@
         name: event.name || event.shortName || `${away.name} vs ${home.name}`,
         date: event.date || competition.date || "",
         status: event.status?.type?.shortDetail || event.status?.type?.description || event.status?.type?.name || "",
+        state: event.status?.type?.state || "",
         away,
         home
       };
@@ -557,7 +558,7 @@
       <article class="schedule-card">
         <time>${escapeHtml(formatKickoff(match.date))}</time>
         <div class="match-main">
-          <strong>${teamDisplay(match.away)} <span>vs</span> ${teamDisplay(match.home)}</strong>
+          <strong>${teamWithScore(match.away, match)} <span>vs</span> ${teamWithScore(match.home, match)}</strong>
           <small>${escapeHtml(match.status || "Status TBD")}</small>
         </div>
         <div class="match-owners">${ownerBadges(matchOwners(match))}</div>
@@ -574,7 +575,8 @@
           participant: owner,
           time: formatKickoff(match.date),
           team,
-          opponent
+          opponent,
+          match
         };
       });
     }).filter((row) => {
@@ -591,8 +593,8 @@
       <article class="action-row">
         <strong>${escapeHtml(row.participant)}</strong>
         <time>${escapeHtml(row.time)}</time>
-        <span>${teamDisplay(row.team)}</span>
-        <span>${teamDisplay(row.opponent)}</span>
+        <span>${teamWithScore(row.team, row.match)}</span>
+        <span>${teamWithScore(row.opponent, row.match)}</span>
       </article>
     `).join("");
   }
@@ -645,6 +647,25 @@
     if (!team || team.isPlaceholder || isPlaceholderTeam(team.name)) return escapeHtml(team?.name || "TBD");
     const owner = ownerForTeam(team);
     return `${flagHtml(owner.team)}${escapeHtml(team.name)}`;
+  }
+
+  function teamWithScore(team, match) {
+    return `${teamDisplay(team)}${scoreHtml(team, match)}`;
+  }
+
+  function scoreHtml(team, match) {
+    if (!hasScore(team) || isPregame(match)) return "";
+    return `<span class="match-score" aria-label="Score ${escapeHtml(team.score)}">${escapeHtml(team.score)}</span>`;
+  }
+
+  function hasScore(team) {
+    return team && team.score !== undefined && team.score !== null && String(team.score) !== "";
+  }
+
+  function isPregame(match) {
+    const state = String(match?.state || "").toLowerCase();
+    const status = String(match?.status || "").toLowerCase();
+    return state === "pre" || status === "scheduled";
   }
 
   function formatKickoff(value) {
