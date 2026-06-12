@@ -131,21 +131,40 @@
 }
 
 .action-row {
-  grid-template-columns: minmax(220px, 1.2fr) 108px minmax(180px, 1fr);
-  gap: 14px;
-}
-
-.action-owner {
+  align-items: stretch;
   display: grid;
-  gap: 5px;
+  gap: 8px;
+  grid-template-columns: 1fr;
 }
 
-.action-owner strong {
+.action-heading {
+  align-items: baseline;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.action-heading strong {
   font-size: 1rem;
 }
 
-.action-row .action-owner span::before {
-  content: none;
+.action-heading time {
+  flex: 0 0 auto;
+}
+
+.action-matchup {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.action-team,
+.action-opponent {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
 }
 
 .action-row .match-score {
@@ -172,5 +191,9 @@
 
   .versus {
     text-align: left;
+  }
+
+  .action-matchup {
+    grid-template-columns: 1fr;
   }
 }
