@@ -13,7 +13,7 @@
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
   }
 
@@ -96,7 +96,10 @@
         <span>${team.innerHTML}</span>
       </div>
       <time>${escapeHtml(time.textContent)}</time>
-      <span class="action-opponent">${opponent.innerHTML}</span>
+      <span class="action-opponent-wrap">
+        <span class="action-vs" aria-hidden="true">vs</span>
+        <span class="action-opponent">${opponent.innerHTML}</span>
+      </span>
     `;
     row.dataset.polished = "true";
   }
