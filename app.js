@@ -83,6 +83,9 @@
   };
 
   const TEAM_ALIASES = {
+    "bosnia": "bosnia and herzegovina",
+    "bosnia herzegovina": "bosnia and herzegovina",
+    "bosnia herz": "bosnia and herzegovina",
     "congo dr": "dr congo",
     "cote d ivoire": "ivory coast",
     "czech republic": "czechia",
