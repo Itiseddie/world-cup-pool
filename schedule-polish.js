@@ -96,10 +96,7 @@
         <span>${team.innerHTML}</span>
       </div>
       <time>${escapeHtml(time.textContent)}</time>
-      <span class="action-opponent-wrap">
-        <span class="action-vs" aria-hidden="true">vs</span>
-        <span class="action-opponent">${opponent.innerHTML}</span>
-      </span>
+      <span class="action-opponent">${opponent.innerHTML}</span>
     `;
     row.dataset.polished = "true";
   }
