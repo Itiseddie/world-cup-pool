@@ -173,6 +173,15 @@
   margin-left: 8px;
 }
 
+.action-team::before,
+.action-team::after,
+.action-opponent::before,
+.action-opponent::after,
+.action-row .match-score::before,
+.action-row .match-score::after {
+  content: none !important;
+}
+
 @media (max-width: 860px) {
   .schedule-controls {
     grid-template-columns: 1fr;
