@@ -26,12 +26,16 @@
   function normalizeTimeLabel(time) {
     if (!time) return;
     const text = time.textContent.trim();
-    if (!text || /TBD|PT$/i.test(text)) return;
+    if (!text || /TBD/i.test(text)) return;
+
+    const includeDate = time.dataset.includeDate === "true" || /^[A-Z][a-z]{2}\s+\d{1,2},/i.test(text);
+    if (/PT$/i.test(text)) return;
 
     const parsed = new Date(time.getAttribute("datetime") || text);
     if (!Number.isNaN(parsed.getTime())) {
-      const pacific = parsed.toLocaleTimeString([], {
+      const pacific = parsed.toLocaleString([], {
         timeZone: PACIFIC_TIME_ZONE,
+        ...(includeDate ? { month: "short", day: "numeric" } : {}),
         hour: "numeric",
         minute: "2-digit"
       });
@@ -118,10 +122,17 @@
     if (!container) return;
     const cards = [...container.children].filter((child) => child.matches(".schedule-card, .action-row"));
     if (cards.length < 2) return;
-    const sorted = [...cards].sort((a, b) => timeLabelValue(a.querySelector("time")?.textContent) - timeLabelValue(b.querySelector("time")?.textContent));
+    const sorted = [...cards].sort((a, b) => renderedTimeValue(a) - renderedTimeValue(b));
     const changed = sorted.some((card, index) => card !== cards[index]);
     if (!changed) return;
     sorted.forEach((card) => container.appendChild(card));
+  }
+
+  function renderedTimeValue(card) {
+    const time = card.querySelector("time");
+    const parsed = new Date(time?.getAttribute("datetime") || "");
+    if (!Number.isNaN(parsed.getTime())) return parsed.getTime();
+    return timeLabelValue(time?.textContent);
   }
 
   function timeLabelValue(label) {
