@@ -148,10 +148,17 @@
   content: none;
 }
 
-.action-opponent::before {
+.action-opponent-wrap {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.action-vs {
   color: var(--muted);
-  content: "vs ";
   font-weight: 750;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 860px) {
