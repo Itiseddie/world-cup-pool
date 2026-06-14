@@ -183,11 +183,7 @@
     state.scheduleError = "";
     renderSchedule();
     try {
-      const params = new URLSearchParams({ dates: espnDateParam(state.scheduleDate) });
-      const response = await fetch(`${ESPN_SCOREBOARD_URL}?${params.toString()}`);
-      if (!response.ok) throw new Error("Could not load ESPN fixtures");
-      const data = await response.json();
-      state.scheduleMatches = normalizeScheduleEvents(data.events || []);
+      state.scheduleMatches = await fetchScheduleDate(state.scheduleDate);
     } catch (error) {
       state.scheduleMatches = [];
       state.scheduleError = error.message || "Could not load ESPN fixtures";
@@ -195,6 +191,22 @@
       state.scheduleLoading = false;
       renderSchedule();
     }
+  }
+
+  async function fetchScheduleDate(dateValue) {
+    const espnDates = [dateValue, nextDateInput(dateValue)];
+    const batches = await Promise.all(espnDates.map((date) => fetchScheduleEspnDate(date)));
+    return uniqueScheduleMatches(batches.flat())
+      .filter((match) => scheduleStartDate(match) === dateValue)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }
+
+  async function fetchScheduleEspnDate(dateValue) {
+    const params = new URLSearchParams({ dates: espnDateParam(dateValue) });
+    const response = await fetch(`${ESPN_SCOREBOARD_URL}?${params.toString()}`);
+    if (!response.ok) throw new Error("Could not load ESPN fixtures");
+    const data = await response.json();
+    return normalizeScheduleEvents(data.events || []);
   }
 
   function numberValue(value) {
@@ -228,8 +240,43 @@
     return `${parts.year}-${parts.month}-${parts.day}`;
   }
 
+  function scheduleStartDate(match) {
+    if (!match?.date) return "";
+    const date = new Date(match.date);
+    if (Number.isNaN(date.getTime())) return "";
+    return pacificDateInput(date);
+  }
+
   function espnDateParam(dateValue) {
     return String(dateValue || "").replace(/-/g, "");
+  }
+
+  function nextDateInput(value) {
+    const date = dateInputToLocalDate(value);
+    date.setDate(date.getDate() + 1);
+    return localDateInput(date);
+  }
+
+  function uniqueScheduleMatches(matches) {
+    const seen = new Set();
+    return matches.filter((match) => {
+      const key = match.id || `${match.date}|${match.name}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function dateInputToLocalDate(value) {
+    const [year, month, day] = String(value || "").split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  function localDateInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   }
 
   function enrichAssignments() {
@@ -559,7 +606,7 @@
 
     el.scheduleMatches.innerHTML = matches.map((match) => `
       <article class="schedule-card">
-        <time>${escapeHtml(formatKickoff(match.date))}</time>
+        <time datetime="${escapeHtml(match.date)}">${escapeHtml(formatKickoff(match.date))}</time>
         <div class="match-main">
           <strong>${teamWithScore(match.away, match)} <span>vs</span> ${teamWithScore(match.home, match)}</strong>
           <small>${escapeHtml(match.status || "Status TBD")}</small>
@@ -595,7 +642,7 @@
     el.participantsInAction.innerHTML = rows.map((row) => `
       <article class="action-row">
         <strong>${escapeHtml(row.participant)}</strong>
-        <time>${escapeHtml(row.time)}</time>
+        <time datetime="${escapeHtml(row.match.date)}">${escapeHtml(row.time)}</time>
         <span>${teamWithScore(row.team, row.match)}</span>
         <span>${teamWithScore(row.opponent, row.match)}</span>
       </article>
