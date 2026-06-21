@@ -479,7 +479,7 @@ h2 {
 }
 
 .team-card {
-  min-height: 150px;
+  min-height: 230px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -510,26 +510,79 @@ h2 {
   background: var(--red);
 }
 
-.team-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+.team-points-total {
+  align-items: center;
+  background: var(--green);
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  min-height: 54px;
+  padding: 10px 12px;
 }
 
-.team-stats div {
+.team-points-total span {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.team-points-total strong {
+  font-size: 1.7rem;
+}
+
+.points-breakdown {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
   background: #f3f7f6;
   border-radius: 8px;
-  min-height: 54px;
-  padding: 8px;
 }
 
-.team-stats span {
-  display: block;
-  font-size: 0.74rem;
+.breakdown-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 850;
+  margin: 0;
+  padding: 9px 11px 5px;
+  text-transform: uppercase;
 }
 
-.team-stats strong {
-  font-size: 1.05rem;
+.breakdown-row {
+  align-items: center;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 9px 11px;
+}
+
+.breakdown-row > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.breakdown-row strong {
+  font-size: 0.84rem;
+}
+
+.breakdown-row small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.breakdown-value {
+  color: var(--green) !important;
+  flex: 0 0 42px;
+  font-size: 1rem !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  text-align: right;
 }
 
 .schedule-controls {
