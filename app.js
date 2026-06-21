@@ -496,7 +496,12 @@
       return haystack.includes(query);
     });
 
-    el.teamsGrid.innerHTML = filtered.map((team) => `
+    el.teamsGrid.innerHTML = filtered.map(teamCard).join("");
+  }
+
+  function teamCard(team) {
+    const breakdown = teamPointBreakdown(team);
+    return `
       <article class="team-card">
         <header>
           <div>
@@ -505,13 +510,54 @@
           </div>
           <span class="badge ${team["Super Tier"] === "A" ? "tier-a" : "tier-b"}">Tier ${escapeHtml(team["Super Tier"])}</span>
         </header>
-        <div class="team-stats">
-          <div><span>Points</span><strong>${numberValue(team["Total Team Points"])}</strong></div>
-          <div><span>Wins</span><strong>${numberValue(team["Group Stage Wins"])}</strong></div>
-          <div><span>Draws</span><strong>${numberValue(team["Group Stage Draws"])}</strong></div>
+        <div class="team-points-total">
+          <span>Total points</span>
+          <strong>${breakdown.total}</strong>
+        </div>
+        <div class="points-breakdown" aria-label="How points were earned">
+          <p class="breakdown-label">How points were earned</p>
+          ${breakdown.entries.map((entry) => `
+            <div class="breakdown-row">
+              <div>
+                <strong>${escapeHtml(entry.label)}</strong>
+                ${entry.detail ? `<small>${escapeHtml(entry.detail)}</small>` : ""}
+              </div>
+              <span class="breakdown-value">+${entry.points}</span>
+            </div>
+          `).join("")}
         </div>
       </article>
-    `).join("");
+    `;
+  }
+
+  function teamPointBreakdown(team) {
+    const wins = numberValue(team["Group Stage Wins"]);
+    const draws = numberValue(team["Group Stage Draws"]);
+    const groupStage = wins + draws * 0.5;
+    const milestones = [
+      { field: "R32 Advanced", label: "Round of 32", points: 2 },
+      { field: "R16 Advanced", label: "Round of 16", points: 3 },
+      { field: "Quarterfinal Advanced", label: "Quarterfinal", points: 5 },
+      { field: "Semifinal Advanced", label: "Semifinal", points: 8 },
+      { field: "Final Advanced", label: "Final", points: 12 },
+      { field: "Champion", label: "Champion", points: 18 }
+    ].filter((milestone) => numberValue(team[milestone.field]) > 0);
+
+    return {
+      total: numberValue(team["Total Team Points"]),
+      entries: [
+        {
+          label: "Group stage",
+          points: groupStage,
+          detail: `${wins} ${wins === 1 ? "win" : "wins"} × 1 · ${draws} ${draws === 1 ? "draw" : "draws"} × 0.5`
+        },
+        ...milestones.map((milestone) => ({
+          label: `Advanced to ${milestone.label}`,
+          points: milestone.points,
+          detail: ""
+        }))
+      ]
+    };
   }
 
   function normalizeScheduleEvents(events) {
