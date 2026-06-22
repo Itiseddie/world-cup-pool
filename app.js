@@ -475,8 +475,13 @@
   }
 
   function statusText(person) {
-    const liveTeams = [person.tierA, person.tierB].filter((team) => String(team.Eliminated || "").toUpperCase() !== "Y").length;
-    return `${liveTeams} teams active`;
+    const liveTeams = [person.tierA, person.tierB].filter((team) => !isEliminated(team)).length;
+    return `${liveTeams} ${liveTeams === 1 ? "team" : "teams"} active`;
+  }
+
+  function isEliminated(team) {
+    const value = String(team?.Eliminated ?? "").trim().toUpperCase();
+    return value === "1" || value === "Y" || value === "YES" || value === "TRUE";
   }
 
   function teamPill(name, tier, team) {
