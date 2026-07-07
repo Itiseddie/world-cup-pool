@@ -1,11 +1,6 @@
 (function () {
   const SHEET_ID = "1Ac5ecT-orrmgJ2h4-a8N-YYyMS3R_AosYFcgoATIBgk";
-  const SHEETS = {
-    assignments: "4",
-    teams: "1",
-    results: "5"
-  };
-
+  const SHEETS = { assignments: "4", teams: "1", results: "5" };
   const BRACKET_PATHS = {
     argentina: { qf: 4, sf: 2 },
     belgium: { qf: 2, sf: 1 },
@@ -20,6 +15,7 @@
   };
 
   let standings = new Map();
+  let patchScheduled = false;
 
   function loadSheet(source) {
     const params = new URLSearchParams({ headers: "1", tqx: "" });
@@ -165,10 +161,7 @@
   function buildStandings(assignments, teams, results) {
     const resultsByName = new Map(results.map((team) => [team["Team Name"], team]));
     const teamsByName = new Map(teams.map((team) => {
-      const merged = {
-        ...team,
-        ...(resultsByName.get(team["Team Name"]) || {})
-      };
+      const merged = { ...team, ...(resultsByName.get(team["Team Name"]) || {}) };
       return [team["Team Name"], merged];
     }));
 
@@ -177,10 +170,7 @@
       const tierB = teamsByName.get(person["Tier B Team"]) || {};
       const points = numberValue(person["Total Points"]) || numberValue(tierA["Total Team Points"]) + numberValue(tierB["Total Team Points"]);
       const remainingPossible = remainingPossibleForParticipant({ tierA, tierB });
-      return [person["Participant Name"], {
-        points,
-        totalPossiblePoints: points + remainingPossible
-      }];
+      return [person["Participant Name"], { points, totalPossiblePoints: points + remainingPossible }];
     }));
   }
 
@@ -197,7 +187,7 @@
         possible.className = "possible-points";
         points.appendChild(possible);
       }
-      possible.textContent = `${formatPoints(person.totalPossiblePoints)} total possible points`;
+      setTextIfChanged(possible, `${formatPoints(person.totalPossiblePoints)} total possible points`);
     });
   }
 
@@ -225,7 +215,7 @@
         possible = document.createElement("span");
         score.appendChild(possible);
       }
-      possible.textContent = `${formatPoints(person.totalPossiblePoints)} possible`;
+      setTextIfChanged(possible, `${formatPoints(person.totalPossiblePoints)} possible`);
     });
   }
 
@@ -233,6 +223,21 @@
     if (!standings.size) return;
     patchLeaderboard();
     patchWidget();
+  }
+
+  function schedulePatchViews() {
+    if (patchScheduled) return;
+    patchScheduled = true;
+    window.setTimeout(() => {
+      patchScheduled = false;
+      patchViews();
+    }, 0);
+  }
+
+  function setTextIfChanged(element, text) {
+    if (element.textContent !== text) {
+      element.textContent = text;
+    }
   }
 
   async function init() {
@@ -248,7 +253,7 @@
       console.warn(error);
     }
 
-    const observer = new MutationObserver(patchViews);
+    const observer = new MutationObserver(schedulePatchViews);
     const leaderboard = document.querySelector("#leaderboard");
     const widget = document.querySelector("#widgetList");
     if (leaderboard) observer.observe(leaderboard, { childList: true, subtree: true });
