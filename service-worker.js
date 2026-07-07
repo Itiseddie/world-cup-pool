@@ -1,4 +1,4 @@
-const CACHE_NAME = "world-cup-pool-v27-total-possible-points";
+const CACHE_NAME = "world-cup-pool-v28-total-possible-points";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,7 +6,7 @@ const ASSETS = [
   "./styles.css?v=total-possible-points",
   "./schedule-polish.css?v=6",
   "./app.js?v=total-possible-points",
-  "./total-possible-points.js?v=1",
+  "./total-possible-points.js?v=2",
   "./participant-schedule-filter.js?v=1",
   "./schedule-polish.js?v=18",
   "./manifest.json",
