@@ -6,6 +6,7 @@ const ASSETS = [
   "./styles.css?v=total-possible-points",
   "./schedule-polish.css?v=6",
   "./app.js?v=total-possible-points",
+  "./total-possible-points.js?v=1",
   "./participant-schedule-filter.js?v=1",
   "./schedule-polish.js?v=18",
   "./manifest.json",
