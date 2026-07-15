@@ -735,6 +735,20 @@ h2 {
   font-weight: 850;
 }
 
+.rules-note {
+  margin-top: 18px;
+  border-left: 4px solid var(--gold);
+  border-radius: 8px;
+  background: rgba(215, 166, 74, 0.14);
+  color: var(--muted);
+  line-height: 1.55;
+  padding: 14px 16px;
+}
+
+.rules-note strong {
+  color: var(--ink);
+}
+
 .rule-list {
   color: var(--muted);
   padding-left: 22px;
